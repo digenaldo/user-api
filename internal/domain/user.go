@@ -24,4 +24,3 @@ type UserUseCase interface {
 	UpdateUser(id, name, email string) (*User, error)
 	DeleteUser(id string) error
 }
-

@@ -26,4 +26,3 @@ func NewClient(uri string) *mongo.Client {
 
 	return client
 }
-
