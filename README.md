@@ -35,6 +35,44 @@ Este comando irá:
 - Subir o container da API
 - Conectar automaticamente os serviços
 
+### Usando Podman
+
+Se preferir usar Podman em vez do Docker, há duas opções comuns em ambientes modernos:
+
+- Usar o comando integrado `podman compose` (recomendado quando disponível, Podman v4+).
+- Usar `podman-compose` se você instalou o projeto separado `podman-compose`.
+
+Exemplos (macOS):
+
+```bash
+# Verifique se o Podman está instalado
+podman --version
+
+# Se ainda não inicializou a máquina Podman no macOS
+podman machine init --now   # cria e inicia a VM Podman (macOS / Windows)
+podman machine start        # apenas se a máquina não estiver rodando
+
+# Subir os serviços com o comportamento do docker-compose
+podman compose up --build
+# ou, se você usa podman-compose:
+podman-compose up --build
+```
+
+O `podman compose up --build` fará o mesmo que o `docker-compose up --build` descrito acima: irá construir a imagem da API, criar um container para o MongoDB e ligar os serviços.
+
+Comandos úteis para gerenciamento e depuração (Podman):
+
+```bash
+podman compose ps            # lista serviços do compose
+podman ps -a                 # lista containers em execução e parados
+podman compose logs api      # ver logs do serviço 'api'
+podman logs <container_id>   # ver logs de um container específico
+podman compose down          # parar e remover containers criados
+podman compose down -v       # parar e remover containers e volumes
+```
+
+Se estiver no macOS e usando Podman pela primeira vez, confirme que a porta está encaminhada da VM/host. Em geral, as conexões para `http://localhost:8080` funcionarão depois que a máquina Podman estiver ativa.
+
 ### 3. Verifique se está funcionando
 
 A API estará disponível em: `http://localhost:8080`
