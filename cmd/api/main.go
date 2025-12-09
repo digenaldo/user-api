@@ -47,6 +47,8 @@ func main() {
 
 	// Setup router
 	r := chi.NewRouter()
+	// Register healthcheck route
+	httphandler.RegisterHealth(r)
 	handler.RegisterRoutes(r)
 
 	// Start server
