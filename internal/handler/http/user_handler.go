@@ -129,12 +129,6 @@ func (h *UserHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, users)
 }
 
-// @Summary List users
-// @Tags users
-// @Produce json
-// @Success 200 {array} domain.User
-// @Router /api/v1/users [get]
-
 // getUser trata requisições GET /api/v1/users/{id}
 // @Summary Get user by ID
 // @Tags users

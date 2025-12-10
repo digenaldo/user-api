@@ -58,7 +58,7 @@ func main() {
 	//   var p *int = &x      // p é um ponteiro para x (armazena o endereço de x)
 	//   *p = 20              // modifica x através do ponteiro (x agora é 20)
 	client := mongo.NewClient(mongoURI)
-	
+
 	// defer garante que esta função seja executada quando main() terminar
 	// Mesmo se houver um panic ou return antecipado, o defer sempre executa
 	// Isso é essencial para limpar recursos (fechar conexões, arquivos, etc.)
@@ -94,13 +94,13 @@ func main() {
 	// Chi é um router HTTP leve e rápido para Go
 	// Router mapeia URLs para funções (handlers)
 	r := chi.NewRouter()
-	
+
 	// Registra rota de healthcheck
 	httphandler.RegisterHealth(r)
-	
+
 	// Registra rotas de usuários (CRUD)
 	handler.RegisterRoutes(r)
-	
+
 	// ============================================
 	// SWAGGER UI - DOCUMENTAÇÃO INTERATIVA
 	// ============================================
@@ -108,8 +108,8 @@ func main() {
 	// Acesse: http://localhost:8080/swagger/index.html
 	//
 	// COMO FUNCIONA:
-	// 1. O comando `swag init` gera o arquivo docs/swagger.json
-	// 2. httpSwagger serve a interface web usando esse arquivo
+	// 1. O comando `swag init` gera os arquivos na pasta docs/
+	// 2. httpSwagger serve a interface web acessando /swagger/swagger.json
 	// 3. A UI permite testar todos os endpoints diretamente no navegador
 	//
 	// IMPORTANTE: Execute `swag init` antes de rodar a aplicação
