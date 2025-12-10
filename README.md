@@ -101,11 +101,6 @@ Base URL: `http://localhost:8080/api/v1/users`
 ```bash
 POST /api/v1/users
 Content-Type: application/json
-
-{
-  "name": "João Silva",
-  "email": "joao@example.com"
-}
 ```
 
 **Resposta (201 Created):**

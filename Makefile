@@ -1,7 +1,7 @@
 .PHONY: up down logs
 
 up: ## Sobe o projeto com Docker Compose
-	docker-compose up --build
+	podman compose up --build
 
 down: ## Para o projeto
 	docker-compose down
