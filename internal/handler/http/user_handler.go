@@ -51,21 +51,20 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 // ============================================
 // CREATE USER
 // ============================================
+// createUser trata requisições POST /api/v1/users
 // @Summary Create user
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body domain.User true "User payload"
+// @Param user body object true "User payload" example({"name":"string","email":"string"})
 // @Success 201 {object} domain.User
 // @Failure 400 {object} map[string]string
 // @Router /api/v1/users [post]
-// createUser trata requisições POST /api/v1/users
-//
-// SOBRE OS PARÂMETROS:
-//   - w http.ResponseWriter: usado para escrever a resposta HTTP
-//   - r *http.Request: contém informações da requisição (body, headers, etc.)
-//     O * significa que é um ponteiro - Go passa por referência para evitar cópia
 func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
+	// SOBRE OS PARÂMETROS:
+	//   - w http.ResponseWriter: usado para escrever a resposta HTTP
+	//   - r *http.Request: contém informações da requisição (body, headers, etc.)
+	//     O * significa que é um ponteiro - Go passa por referência para evitar cópia
 	// Define uma struct anônima para receber os dados do JSON
 	// As tags json:"name" mapeiam os campos do JSON para os campos da struct
 	// Se o JSON tiver "name", vai para req.Name
@@ -112,13 +111,12 @@ func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
+// listUsers trata requisições GET /api/v1/users
 // @Summary List users
 // @Tags users
 // @Produce json
 // @Success 200 {array} domain.User
 // @Router /api/v1/users [get]
-
-// listUsers trata requisições GET /api/v1/users
 func (h *UserHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.uc.ListUsers()
 	if err != nil {
@@ -153,6 +151,16 @@ func (h *UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, user)
 }
 
+// @Summary Update user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param user body object true "User payload" example({"name":"string","email":"string"})
+// @Success 200 {object} domain.User
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [put]
 // updateUser trata requisições PUT /api/v1/users/{id}
 func (h *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -184,6 +192,12 @@ func (h *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, user)
 }
 
+// @Summary Delete user
+// @Tags users
+// @Param id path string true "User ID"
+// @Success 204 "No Content"
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [delete]
 // deleteUser trata requisições DELETE /api/v1/users/{id}
 func (h *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
