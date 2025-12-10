@@ -1,26 +1,43 @@
+## Arquivo docker-compose em YAML: descreve serviços e rede alvo para Docker/Podman
+## OBS: Podman reconhece a maioria das definições do Compose v3.8 via `podman compose`.
 version: '3.8'
 
 services:
+  # Serviço de banco de dados MongoDB usado pela aplicação
   mongo:
     image: mongo:7.0
+    # Mapeamento de porta host:container (para acesso local se necessário)
     ports:
       - "27017:27017"
     environment:
+      # Usuário/ senha inicial para o Mongo (apenas para ambiente de desenvolvimento)
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
+    # Volume persistente para os dados do Mongo
     volumes:
       - mongo_data:/data/db
 
+  # Serviço da API Go
   api:
+    # Constrói a imagem a partir do Dockerfile no diretório atual
     build: .
     depends_on:
       - mongo
     environment:
+      # URI que a aplicação usa para conectar no MongoDB dentro do compose network
       MONGO_URI: mongodb://root:root@mongo:27017/?authSource=admin
       PORT: 8080
+    # Expor porta da API para o host
     ports:
       - "8080:8080"
 
 volumes:
+  # Volume nomeado para persistência entre reinícios
   mongo_data:
+
+## Observações importantes (pt-BR):
+## - `depends_on` garante ordem de start, mas não verifica se o serviço está "pronto".
+##   Para garantir disponibilidade, a aplicação deve tentar reconectar até o DB responder.
+## - Ao usar Podman, execute `podman compose up --build` (Makefile já sugere isso).
+## - Não use credenciais simples em produção. Aqui são para ambiente de estudo.
 
