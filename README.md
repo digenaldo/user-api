@@ -46,29 +46,59 @@ Exemplo: `POST /api/v1/users` para criar um usuário
 ## Como Executar
 
 ### Pré-requisitos
-- Docker ou Podman instalado
+- Docker ou Podman instalado (para rodar com containers)
+- Go 1.22+ instalado (para rodar localmente)
+- MongoDB instalado (se rodar localmente sem Docker)
 
-### Passo a passo
+### Opção 1: Usando Docker/Podman (Recomendado)
 
-1. Clone o repositório:
+**Com Docker:**
 ```bash
-git clone <repository-url>
-cd user-api
-```
-
-2. Execute com Docker Compose:
-```bash
+# Na raiz do projeto
 docker-compose up --build
 ```
 
-3. Ou com Podman (macOS):
+**Com Podman:**
 ```bash
-podman machine init --now
-podman machine start
+# Na raiz do projeto
 podman compose up --build
 ```
 
-4. Teste se está funcionando:
+**Verificar se está funcionando:**
+```bash
+curl http://localhost:8080/healthz
+```
+
+### Opção 2: Rodar Localmente (sem Docker)
+
+1. **Inicie o MongoDB localmente** (se não tiver, use Docker apenas para o MongoDB):
+   ```bash
+   # Com Docker (apenas MongoDB)
+   docker run -d -p 27017:27017 --name mongo mongo:7.0
+   ```
+
+2. **Configure as variáveis de ambiente:**
+   ```bash
+   # Linux/Mac
+   export MONGO_URI="mongodb://localhost:27017"
+   export PORT="8080"
+   
+   # Windows (PowerShell)
+   $env:MONGO_URI="mongodb://localhost:27017"
+   $env:PORT="8080"
+   
+   # Windows (CMD)
+   set MONGO_URI=mongodb://localhost:27017
+   set PORT=8080
+   ```
+
+3. **Execute a aplicação:**
+   ```bash
+   # Na raiz do projeto
+   go run cmd/api/main.go
+   ```
+
+**Verificar se está funcionando:**
 ```bash
 curl http://localhost:8080/healthz
 ```
@@ -81,17 +111,13 @@ A API possui documentação interativa usando Swagger UI, que permite testar tod
 
 ### Instalação do Swag
 
-Primeiro, instale a ferramenta `swag` que gera a documentação:
+Instale a ferramenta `swag` que gera a documentação:
 
 ```bash
-# Instalar swag globalmente
 go install github.com/swaggo/swag/cmd/swag@latest
-
-# Verificar instalação
-swag --version
 ```
 
-**Nota:** Se o comando `swag` não for encontrado após a instalação, adicione o diretório `$GOPATH/bin` ao seu PATH:
+**Se o comando não for encontrado, adicione ao PATH:**
 ```bash
 # Linux/Mac
 export PATH=$PATH:$(go env GOPATH)/bin
@@ -102,42 +128,26 @@ $env:Path += ";$(go env GOPATH)\bin"
 
 ### Gerar a Documentação
 
-Após instalar o `swag`, gere a documentação executando:
-
+**Na raiz do projeto, execute:**
 ```bash
-# Execute na raiz do projeto
 swag init -g cmd/api/main.go -o docs
 ```
 
 **O que este comando faz:**
-- `-g cmd/api/main.go`: Especifica onde está o arquivo main.go com as anotações Swagger
-- `-o docs`: Define que os arquivos serão gerados na pasta `docs/` na raiz do projeto
-- Isso cria a pasta `docs/` na raiz com os arquivos necessários (docs.go, swagger.json, swagger.yaml)
-
-**Alternativa (se preferir executar de dentro de cmd/api):**
-```bash
-cd cmd/api
-swag init -o ../../docs
-cd ../..
-```
-
-Isso criará a pasta `docs/` na raiz do projeto com os arquivos de documentação necessários.
+- `-g cmd/api/main.go`: Especifica o arquivo main.go com as anotações Swagger
+- `-o docs`: Gera os arquivos na pasta `docs/` na raiz do projeto
+- Cria: `docs/docs.go`, `docs/swagger.json`, `docs/swagger.yaml`
 
 ### Acessar a UI do Swagger
 
-1. Inicie a aplicação (se ainda não estiver rodando):
-   ```bash
-   docker-compose up --build
-   # ou
-   go run cmd/api/main.go
-   ```
+1. **Inicie a aplicação** (Docker ou localmente)
 
-2. Abra seu navegador e acesse:
+2. **Acesse no navegador:**
    ```
    http://localhost:8080/swagger/index.html
    ```
 
-3. Você verá uma interface interativa onde pode:
+3. **Na interface você pode:**
    - Ver todos os endpoints disponíveis
    - Ver exemplos de requisições e respostas
    - Testar os endpoints diretamente no navegador
@@ -145,13 +155,13 @@ Isso criará a pasta `docs/` na raiz do projeto com os arquivos de documentaçã
 
 ### Atualizar a Documentação
 
-Sempre que modificar os endpoints ou adicionar novos, execute novamente:
+Após modificar endpoints ou adicionar novos, regenere:
 ```bash
 # Na raiz do projeto
 swag init -g cmd/api/main.go -o docs
 ```
 
-E reinicie a aplicação para ver as mudanças.
+E reinicie a aplicação.
 
 ## Endpoints
 
