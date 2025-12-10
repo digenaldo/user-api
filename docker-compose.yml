@@ -1,43 +1,60 @@
-## Arquivo docker-compose em YAML: descreve serviços e rede alvo para Docker/Podman
-## OBS: Podman reconhece a maioria das definições do Compose v3.8 via `podman compose`.
 version: '3.8'
 
+# Define os serviços (containers) que vamos rodar
 services:
-  # Serviço de banco de dados MongoDB usado pela aplicação
+  # Serviço do MongoDB - nosso banco de dados
   mongo:
+    # Usa a imagem oficial do MongoDB versão 7.0
     image: mongo:7.0
-    # Mapeamento de porta host:container (para acesso local se necessário)
+    
+    # Expõe a porta 27017 (porta padrão do MongoDB) para o host
+    # Formato: "host:container" - permite acessar de fora do container
     ports:
       - "27017:27017"
+    
+    # Variáveis de ambiente para configurar o MongoDB
+    # Essas variáveis são lidas na primeira inicialização
     environment:
-      # Usuário/ senha inicial para o Mongo (apenas para ambiente de desenvolvimento)
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
-    # Volume persistente para os dados do Mongo
+    
+    # Volume para persistir os dados do MongoDB
+    # Se o container for removido, os dados ficam salvos no volume
     volumes:
       - mongo_data:/data/db
 
-  # Serviço da API Go
+  # Serviço da nossa API
   api:
-    # Constrói a imagem a partir do Dockerfile no diretório atual
+    # Constrói a imagem usando o Dockerfile na raiz do projeto
     build: .
+    
+    # Garante que o MongoDB inicie antes da API
+    # Importante: isso só garante a ordem, não espera o MongoDB estar pronto
+    # Por isso nossa aplicação tem lógica de reconexão
     depends_on:
       - mongo
+    
+    # Variáveis de ambiente que a aplicação vai ler
     environment:
-      # URI que a aplicação usa para conectar no MongoDB dentro do compose network
+      # URI de conexão: mongodb://usuário:senha@host:porta/?authSource=admin
+      # O host é "mongo" porque é o nome do serviço no docker-compose
+      # Dentro da rede Docker, os serviços se comunicam pelo nome
       MONGO_URI: mongodb://root:root@mongo:27017/?authSource=admin
       PORT: 8080
-    # Expor porta da API para o host
+    
+    # Expõe a porta 8080 da API para o host
     ports:
       - "8080:8080"
 
+# Define volumes nomeados (persistência de dados)
 volumes:
-  # Volume nomeado para persistência entre reinícios
   mongo_data:
+    # Este volume armazena os dados do MongoDB
+    # Permanece mesmo se removermos o container
 
-## Observações importantes (pt-BR):
-## - `depends_on` garante ordem de start, mas não verifica se o serviço está "pronto".
-##   Para garantir disponibilidade, a aplicação deve tentar reconectar até o DB responder.
-## - Ao usar Podman, execute `podman compose up --build` (Makefile já sugere isso).
-## - Não use credenciais simples em produção. Aqui são para ambiente de estudo.
-
+# Notas importantes:
+# - depends_on garante ordem de inicialização, mas não verifica se o serviço está pronto
+#   Por isso nossa aplicação tenta reconectar automaticamente se o banco ainda não estiver disponível
+# - Para usar com Podman: `podman compose up --build` (mesma sintaxe do Docker)
+# - As credenciais root/root são apenas para desenvolvimento - NUNCA use em produção
+# - Os serviços se comunicam pela rede interna do Docker usando os nomes (mongo, api)

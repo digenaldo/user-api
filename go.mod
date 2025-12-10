@@ -1,6 +1,6 @@
 module user-api
 
-// go.mod: arquivo de configuração de dependências do Go (pt-BR)
+// go.mod: arquivo de configuração de dependências do Go
 // - Não edite o bloco `require` manualmente sem entender `go mod`.
 // - Use `go get`, `go mod tidy` ou `go mod vendor` para alterar dependências.
 // - O `go` define a versão mínima do compilador/semântica de módulos.
@@ -25,7 +25,7 @@ require (
 	golang.org/x/text v0.17.0 // indirect
 )
 
-// Explicação rápida (pt-BR):
+// Explicação rápida:
 // - `module` define o caminho do módulo local.
 // - `go 1.22` ajusta regras de compatibilidade do compilador e módulos.
 // - Depêndencias diretas aparecem no primeiro bloco `require`.

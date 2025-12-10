@@ -1,171 +1,160 @@
+# User API — Guia Didático
 
-User API — Guia Didático (para alunos)
+API REST em Go para CRUD de usuários usando MongoDB. Este projeto segue Clean Architecture para manter o código organizado e testável.
 
-Este repositório contém uma API REST simples em Go para CRUD de usuários,
-com MongoDB como persistência. O objetivo deste README é explicar de forma
-didática a arquitetura do projeto, o fluxo de uma requisição e como executar
-o sistema localmente (Docker / Podman).
+## Arquitetura
 
-Sumário rápido
-- Arquitetura: Clean Architecture (camadas: domain, usecase, repository, handler, infra)
-- Pontos principais: estrutura de pastas, como a requisição percorre as camadas, e onde olhar para cada parte.
-- Execução: instruções para Docker e Podman, e saúde da aplicação (`/healthz`).
+O projeto está dividido em camadas bem definidas:
 
-## Arquitetura e fluxo (explicação para alunos)
+**1. Handlers (HTTP)** - `internal/handler/http`
+- Recebe requisições HTTP
+- Traduz para chamadas aos usecases
+- Formata respostas JSON
 
-1) Handlers (HTTP)
-- Local: `internal/handler/http` (ex: `user_handler.go`, `health_handler.go`)
-- Responsabilidade: traduzir requisições HTTP para chamadas aos usecases;
-  tratar e formatar respostas HTTP (status e JSON).
+**2. Usecases (Lógica de Negócio)** - `internal/usecase`
+- Contém as regras do domínio
+- Faz validações (ex: email deve ter '@')
+- Orquestra chamadas ao repositório
 
-2) Usecases (lógica de negócio)
-- Local: `internal/usecase` (ex: `user_usecase.go`)
-- Responsabilidade: regras do domínio — validações, orquestração entre
-  repositório e handlers. Ex.: validação de e-mail, construção da entidade.
+**3. Repository (Persistência)** - `internal/repository`
+- Acessa o banco de dados MongoDB
+- Converte entre entidades do domínio e documentos do MongoDB
+- Usa context para controlar timeouts
 
-3) Repository (persistência)
-- Local: `internal/repository` (ex: `user_mongo_repository.go`)
-- Responsabilidade: acesso ao banco (MongoDB). Converte entre entidades
-  de domínio e documentos BSON, lida com timeouts via `context`.
+**4. Infra (Infraestrutura)** - `internal/infra/mongo`
+- Cria e configura o cliente MongoDB
+- Faz conexão e ping
 
-4) Infra (infraestrutura)
-- Local: `internal/infra/mongo/mongo_client.go`
-- Responsabilidade: criação e configuração do cliente MongoDB (connect, ping).
+**5. Domain (Entidades)** - `internal/domain`
+- Define a entidade User
+- Define interfaces (UserRepository, UserUseCase)
+- Não depende de nada externo
 
-5) Domain (entidades e interfaces)
-- Local: `internal/domain` (ex: `user.go`)
-- Responsabilidade: definir entidades (User) e interfaces (UserRepository, UserUseCase)
-  usadas pelas camadas superiores.
+## Fluxo de uma Requisição
 
-Fluxo de uma requisição (exemplo `POST /api/v1/users`):
-- O cliente chama o endpoint `POST /api/v1/users` (handler em `user_handler.go`).
-- O handler decodifica o JSON e chama `CreateUser` no usecase.
-- O usecase valida valores (ex.: e-mail) e cria a entidade `domain.User`.
-- Em seguida chama `repo.Create(user)`; a implementação Mongo (`user_mongo_repository.go`)
-  persiste o documento e popula o campo `ID`.
-- O usecase retorna a entidade criada ao handler, que a serializa como JSON
-  e responde com `201 Created`.
+Exemplo: `POST /api/v1/users` para criar um usuário
 
-Onde olhar para entender o código (passo a passo):
-- `cmd/api/main.go`: ponto de entrada — inicializa Mongo, cria repo/usecase/handler e registra rotas.
-- `internal/handler/http/user_handler.go`: endpoints HTTP e tradução para usecases.
-- `internal/usecase/user_usecase.go`: regras de negócio e validações.
-- `internal/repository/user_mongo_repository.go`: queries Mongo, conversões ObjectID, timeouts.
+1. Handler recebe a requisição HTTP e decodifica o JSON
+2. Handler chama `uc.CreateUser()` do usecase
+3. Usecase valida o email e cria a entidade `domain.User`
+4. Usecase chama `repo.Create(user)` do repositório
+5. Repository converte para formato MongoDB e salva no banco
+6. Repository popula o ID na entidade
+7. Usecase retorna o usuário criado
+8. Handler serializa para JSON e retorna `201 Created`
 
-## Como executar (passo-a-passo)
+## Como Executar
 
-Pré-requisitos: Docker ou Podman (no macOS, use `podman machine` antes).
+### Pré-requisitos
+- Docker ou Podman instalado
 
-1) Clonar o repositório:
+### Passo a passo
 
+1. Clone o repositório:
 ```bash
 git clone <repository-url>
 cd user-api
 ```
 
-2) Executar com Docker Compose (recomendado):
-
+2. Execute com Docker Compose:
 ```bash
 docker-compose up --build
 ```
 
-3) Executar com Podman (alternativa):
-
+3. Ou com Podman (macOS):
 ```bash
-# Se macOS: inicializar a VM do Podman (uma vez)
 podman machine init --now
 podman machine start
-
-# Subir os serviços (usa o mesmo docker-compose.yml)
 podman compose up --build
 ```
 
-Observação: a aplicação escuta na porta `8080` por padrão. Se a VM do
-Podman estiver ativa, `http://localhost:8080` deve apontar para a API.
-
-4) Verificar saúde da aplicação (rápido):
-
+4. Teste se está funcionando:
 ```bash
 curl http://localhost:8080/healthz
-# Deve retornar: {"status":"ok","time":"2025-..."}
 ```
 
-## Endpoints (resumo didático)
+A API estará disponível em `http://localhost:8080`
 
-- `GET  /healthz` — endpoint leve para verificar se a aplicação responde.
-- `POST /api/v1/users` — cria um usuário.
-- `GET  /api/v1/users` — lista todos os usuários.
-- `GET  /api/v1/users/{id}` — busca por ID (ID é ObjectID do Mongo em hex).
-- `PUT  /api/v1/users/{id}` — atualiza campos (name, email).
-- `DELETE /api/v1/users/{id}` — remove usuário.
+## Endpoints
 
-Regras importantes:
-- Email deve conter `@` — essa validação é feita na camada de usecase.
-- IDs esperados são hex strings de ObjectID do MongoDB.
+- `GET  /healthz` - Verifica se a aplicação está respondendo
+- `POST /api/v1/users` - Cria um novo usuário
+- `GET  /api/v1/users` - Lista todos os usuários
+- `GET  /api/v1/users/{id}` - Busca usuário por ID
+- `PUT  /api/v1/users/{id}` - Atualiza um usuário
+- `DELETE /api/v1/users/{id}` - Remove um usuário
 
-## Exemplos rápidos com cURL
+**Regras:**
+- Email deve conter `@` (validação no usecase)
+- IDs são strings hexadecimais do ObjectID do MongoDB
 
-Criar usuário:
+## Exemplos com cURL
+
+**Criar usuário:**
 ```bash
-curl -sS -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{"name":"João Silva","email":"joao@example.com"}'
 ```
 
-Listar usuários:
+**Listar usuários:**
 ```bash
-curl -sS http://localhost:8080/api/v1/users
+curl http://localhost:8080/api/v1/users
 ```
 
-Buscar por ID:
+**Buscar por ID:**
 ```bash
-curl -sS http://localhost:8080/api/v1/users/<id>
+curl http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011
 ```
 
-Atualizar usuário:
+**Atualizar usuário:**
 ```bash
-curl -sS -X PUT http://localhost:8080/api/v1/users/<id> \
+curl -X PUT http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011 \
   -H "Content-Type: application/json" \
   -d '{"name":"João Atualizado","email":"joao.novo@example.com"}'
 ```
 
-Deletar usuário:
+**Deletar usuário:**
 ```bash
-curl -sS -X DELETE http://localhost:8080/api/v1/users/<id>
+curl -X DELETE http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011
 ```
 
-## Dicas de ensino (para você usar com alunos)
+## Onde Começar a Entender o Código
 
-- Comece mostrando `cmd/api/main.go` para explicar inicialização e injeção
-  de dependências simples (criamos repo → usecase → handler).
-- Peça aos alunos para seguirem o fluxo de uma requisição (handler → usecase → repo).
-- Mostre `internal/repository/user_mongo_repository.go` para explicar contextos,
-  timeouts e conversões entre `ObjectID` e `string`.
-- Explique por que dependemos de interfaces (`domain.UserRepository`) — facilita testes.
+1. **`cmd/api/main.go`** - Ponto de entrada. Mostra como tudo é montado (Mongo → Repository → Usecase → Handler)
 
-## Variáveis de ambiente
+2. **`internal/handler/http/user_handler.go`** - Endpoints HTTP e como traduzem para usecases
 
-- `MONGO_URI` - URI de conexão do MongoDB (padrão: `mongodb://localhost:27017`)
-- `PORT` - Porta do servidor HTTP (padrão: `8080`)
+3. **`internal/usecase/user_usecase.go`** - Regras de negócio e validações
 
-No `docker-compose.yml` já configuramos as variáveis para rodar em containers.
+4. **`internal/repository/user_mongo_repository.go`** - Como acessamos o MongoDB, conversões de ObjectID, uso de context
 
-## Parar os serviços
+## Variáveis de Ambiente
+
+- `MONGO_URI` - URI do MongoDB (padrão: `mongodb://localhost:27017`)
+- `PORT` - Porta do servidor (padrão: `8080`)
+
+No `docker-compose.yml` essas variáveis já estão configuradas.
+
+## Parar os Serviços
 
 ```bash
-docker-compose down -v   # ou podman compose down -v
+docker-compose down -v
+# ou
+podman compose down -v
 ```
 
-## Banco de dados (detalhes rápidos)
+## Banco de Dados
 
-- Database: `userdb`
-- Collection: `users`
-- Porta MongoDB (exposta): `27017`
-- Credenciais (docker-compose): username `root`, password `root`
+- **Database:** `userdb`
+- **Collection:** `users`
+- **Porta:** `27017`
+- **Credenciais (docker-compose):** `root` / `root`
 
----
+## Dicas para Estudar
 
-Se quiser, eu posso também gerar uma versão do README em formato de aula
-com slides/questões para os alunos — diga se deseja uma versão "aula".
-**Resposta (200 OK):**
+- Siga o fluxo de uma requisição do handler até o banco
+- Veja como as interfaces permitem trocar implementações
+- Entenda por que usamos ponteiros em Go
+- Observe como o context controla timeouts
 

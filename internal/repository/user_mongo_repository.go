@@ -12,84 +12,67 @@ import (
 	"user-api/internal/usecase"
 )
 
-// userDoc represents the MongoDB document structure
+// userDoc é a estrutura usada para armazenar no MongoDB
+// Usa primitive.ObjectID que é o tipo nativo do MongoDB para IDs
 type userDoc struct {
 	ID    primitive.ObjectID `bson:"_id,omitempty"`
 	Name  string             `bson:"name"`
 	Email string             `bson:"email"`
 }
 
-// UserMongoRepository implements domain.UserRepository using MongoDB
+// UserMongoRepository implementa domain.UserRepository usando MongoDB
 type UserMongoRepository struct {
 	collection *mongo.Collection
 }
 
-// NewUserMongoRepository creates a new MongoDB user repository
+// NewUserMongoRepository cria um repositório MongoDB
+// Recebe o database como ponteiro para evitar cópias e garantir que todas
+// as operações usem o mesmo cliente compartilhado
 func NewUserMongoRepository(db *mongo.Database) domain.UserRepository {
-	// Recebemos `db *mongo.Database` como ponteiro:
-	// - `*mongo.Database` é um tipo que representa o database no driver;
-	// - passar um ponteiro evita cópia de estruturas grandes e garante que
-	//   todas as operações no mesmo `db` afetem o mesmo estado/cliente.
-	//
-	// Retornamos `&UserMongoRepository{...}` (endereçando a struct):
-	// - o `&` cria e retorna um ponteiro para a struct `UserMongoRepository`.
-	// - assim o valor retornado implementa a interface `domain.UserRepository`
-	//   sem ser copiado em chamadas subsequentes.
 	return &UserMongoRepository{
 		collection: db.Collection("users"),
 	}
 }
 
-// Create inserts a new user document
-// Criamos métodos com receptor `r *UserMongoRepository` (ponteiro):
-//   - o receptor em forma de ponteiro permite que métodos modifiquem o
-//     estado interno da struct `UserMongoRepository` sem copiar a struct.
-//   - é uma prática comum em Go quando a struct contém campos mutáveis
-//     (ex: uma referência a uma coleção).
+// Create insere um novo usuário no MongoDB
+// O ID é gerado automaticamente pelo MongoDB e depois convertido para string hex
 func (r *UserMongoRepository) Create(user *domain.User) error {
-	// Cria um contexto com timeout para a operação de escrita.
-	// Contexts evitam que operações pendentes fiquem indefinidamente travadas.
+	// Context com timeout evita que a operação trave indefinidamente
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Converte a entidade de domínio para o formato de documento usado no MongoDB.
-	// Note: `user` é um ponteiro (*domain.User). Isso permite que modificações
-	// feitas pelo repositório (ex: atribuir user.ID) reflitam no objeto
-	// passado pelo chamador.
+	// Converte a entidade do domínio para o formato do MongoDB
 	doc := userDoc{
 		Name:  user.Name,
 		Email: user.Email,
 	}
 
-	// Insere o documento na collection. `InsertOne` usa o contexto com timeout.
+	// Insere no banco
 	result, err := r.collection.InsertOne(ctx, doc)
 	if err != nil {
 		return err
 	}
 
-	// O driver retorna o _id gerado. Convertendo para ObjectID e depois para hex
-	// para armazenar no campo ID da entidade de domínio. Como `user` é ponteiro,
-	// atribuí-lo aqui atualiza a instância visível ao chamador.
+	// Pega o ID gerado, converte para ObjectID e depois para string hex
+	// Como user é um ponteiro, essa alteração é visível para quem chamou
 	user.ID = result.InsertedID.(primitive.ObjectID).Hex()
 	return nil
 }
 
-// GetByID retrieves a user by ID
+// GetByID busca um usuário pelo ID
 func (r *UserMongoRepository) GetByID(id string) (*domain.User, error) {
-	// Busca por ID exige converter o hex string para ObjectID do MongoDB.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Conversão do ID (linha importante): se a string não for um hex válido
-	// de ObjectID, retornamos ErrNotFound para que a camada superior trate
-	// como recurso inexistente.
+	// Converte a string hex para ObjectID do MongoDB
+	// Se o formato estiver inválido, retorna erro de não encontrado
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, usecase.ErrNotFound
 	}
 
 	var doc userDoc
-	// Executa a consulta e decodifica o resultado no struct doc.
+	// Busca o documento e decodifica no struct
 	err = r.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&doc)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -98,7 +81,7 @@ func (r *UserMongoRepository) GetByID(id string) (*domain.User, error) {
 		return nil, err
 	}
 
-	// Converte o documento do banco para a entidade de domínio.
+	// Converte de volta para a entidade do domínio
 	return &domain.User{
 		ID:    doc.ID.Hex(),
 		Name:  doc.Name,
@@ -106,21 +89,20 @@ func (r *UserMongoRepository) GetByID(id string) (*domain.User, error) {
 	}, nil
 }
 
-// List retrieves all users
+// List retorna todos os usuários
 func (r *UserMongoRepository) List() ([]*domain.User, error) {
-	// Lista todos os documentos da collection `users`.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Busca todos os documentos (bson.M{} significa "sem filtro")
 	cursor, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
-	// Garante fechamento do cursor ao final da função.
 	defer cursor.Close(ctx)
 
 	var users []*domain.User
-	// Iteramos sobre o cursor e decodificamos cada documento.
+	// Itera sobre o cursor convertendo cada documento
 	for cursor.Next(ctx) {
 		var doc userDoc
 		if err := cursor.Decode(&doc); err != nil {
@@ -133,7 +115,7 @@ func (r *UserMongoRepository) List() ([]*domain.User, error) {
 		})
 	}
 
-	// Verifica se ocorreu erro durante a iteração do cursor.
+	// Verifica se houve erro durante a iteração
 	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
@@ -141,20 +123,18 @@ func (r *UserMongoRepository) List() ([]*domain.User, error) {
 	return users, nil
 }
 
-// Update updates a user document
+// Update atualiza um usuário existente
 func (r *UserMongoRepository) Update(user *domain.User) error {
-	// Atualiza um documento pelo seu ObjectID.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Converte o ID recebido (hex) para ObjectID. Se inválido, retornamos
-	// ErrNotFound para manter a API consistente (não vazamos detalhes do DB).
+	// Converte o ID para ObjectID
 	oid, err := primitive.ObjectIDFromHex(user.ID)
 	if err != nil {
 		return usecase.ErrNotFound
 	}
 
-	// Monta o update usando operador $set para alterar apenas campos informados.
+	// Usa $set para atualizar apenas os campos informados
 	update := bson.M{
 		"$set": bson.M{
 			"name":  user.Name,
@@ -162,13 +142,13 @@ func (r *UserMongoRepository) Update(user *domain.User) error {
 		},
 	}
 
-	// Executa a atualização por ID.
+	// Executa a atualização
 	result, err := r.collection.UpdateByID(ctx, oid, update)
 	if err != nil {
 		return err
 	}
 
-	// Se nenhum documento foi correspondido, retorna ErrNotFound.
+	// Se nenhum documento foi encontrado, retorna erro
 	if result.MatchedCount == 0 {
 		return usecase.ErrNotFound
 	}
@@ -176,9 +156,8 @@ func (r *UserMongoRepository) Update(user *domain.User) error {
 	return nil
 }
 
-// Delete removes a user document
+// Delete remove um usuário
 func (r *UserMongoRepository) Delete(id string) error {
-	// Remove um documento pelo seu ID.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -192,6 +171,7 @@ func (r *UserMongoRepository) Delete(id string) error {
 		return err
 	}
 
+	// Se nenhum documento foi deletado, retorna erro
 	if result.DeletedCount == 0 {
 		return usecase.ErrNotFound
 	}
