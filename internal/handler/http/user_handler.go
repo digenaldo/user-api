@@ -10,13 +10,29 @@ import (
 	"user-api/internal/usecase"
 )
 
+// ============================================
+// HANDLER HTTP
+// ============================================
 // UserHandler gerencia as requisições HTTP relacionadas a usuários
 // Traduz requisições HTTP para chamadas aos usecases e formata as respostas
+//
+// RESPONSABILIDADES DO HANDLER:
+// 1. Receber requisições HTTP (ler JSON do body, parâmetros da URL)
+// 2. Validar formato dos dados (JSON válido, campos presentes)
+// 3. Chamar o usecase apropriado
+// 4. Traduzir erros do usecase para status HTTP (400, 404, 500)
+// 5. Formatar respostas JSON com status correto
+//
+// O QUE O HANDLER NÃO FAZ:
+// - Não contém lógica de negócio (isso é do usecase)
+// - Não acessa banco de dados diretamente (isso é do repository)
+// - Não valida regras de negócio (ex: email válido - isso é do usecase)
 type UserHandler struct {
-	uc domain.UserUseCase
+	uc domain.UserUseCase  // Dependência: o usecase que contém a lógica de negócio
 }
 
 // NewUserHandler cria um novo handler recebendo o usecase como dependência
+// Retorna *UserHandler (ponteiro) - padrão em Go para structs
 func NewUserHandler(uc domain.UserUseCase) *UserHandler {
 	return &UserHandler{uc: uc}
 }
@@ -32,32 +48,59 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 	})
 }
 
+// ============================================
+// CREATE USER
+// ============================================
 // createUser trata requisições POST /api/v1/users
+//
+// SOBRE OS PARÂMETROS:
+// - w http.ResponseWriter: usado para escrever a resposta HTTP
+// - r *http.Request: contém informações da requisição (body, headers, etc.)
+//   O * significa que é um ponteiro - Go passa por referência para evitar cópia
 func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
+	// Define uma struct anônima para receber os dados do JSON
+	// As tags json:"name" mapeiam os campos do JSON para os campos da struct
+	// Se o JSON tiver "name", vai para req.Name
 	var req struct {
-		Name  string `json:"name"`
-		Email string `json:"email"`
+		Name  string `json:"name"`  // Campo Name mapeia para "name" no JSON
+		Email string `json:"email"` // Campo Email mapeia para "email" no JSON
 	}
 
-	// Lê o JSON do corpo da requisição
+	// Lê e decodifica o JSON do corpo da requisição
+	//
+	// SOBRE json.NewDecoder(r.Body).Decode(&req):
+	// - r.Body é um io.Reader com os bytes do JSON enviado
+	// - json.NewDecoder cria um decodificador que lê desse Reader
+	// - .Decode(&req) converte o JSON para a struct req
+	// - O & passa um ponteiro para req, permitindo que Decode preencha os campos
+	//
+	// Se o JSON for inválido (ex: sintaxe errada, tipo errado), retorna erro
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid request body")
-		return
+		return  // Para a execução aqui - não continua
 	}
 
 	// Chama o usecase para criar o usuário
-	// A validação do email acontece dentro do usecase
+	// A validação do email (deve conter '@') acontece dentro do usecase
+	//
+	// CreateUser retorna (*domain.User, error)
+	// - Se sucesso: user contém o usuário criado (com ID populado)
+	// - Se erro: user é nil e err contém o erro
 	user, err := h.uc.CreateUser(req.Name, req.Email)
 	if err != nil {
+		// Tratamento de erros: traduz erros do usecase para status HTTP
+		// ErrInvalidEmail → 400 Bad Request (erro do cliente)
 		if err == usecase.ErrInvalidEmail {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		// Outros erros (ex: banco indisponível) → 500 Internal Server Error
 		writeError(w, http.StatusInternalServerError, "Failed to create user")
 		return
 	}
 
-	// Retorna 201 Created com o usuário criado
+	// Retorna 201 Created com o usuário criado em JSON
+	// 201 Created é o status HTTP padrão para criação bem-sucedida
 	writeJSON(w, http.StatusCreated, user)
 }
 
