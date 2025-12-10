@@ -75,6 +75,71 @@ curl http://localhost:8080/healthz
 
 A API estará disponível em `http://localhost:8080`
 
+## Documentação Swagger (UI Interativa)
+
+A API possui documentação interativa usando Swagger UI, que permite testar todos os endpoints diretamente no navegador.
+
+### Instalação do Swag
+
+Primeiro, instale a ferramenta `swag` que gera a documentação:
+
+```bash
+# Instalar swag globalmente
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Verificar instalação
+swag --version
+```
+
+**Nota:** Se o comando `swag` não for encontrado após a instalação, adicione o diretório `$GOPATH/bin` ao seu PATH:
+```bash
+# Linux/Mac
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# Windows (PowerShell)
+$env:Path += ";$(go env GOPATH)\bin"
+```
+
+### Gerar a Documentação
+
+Após instalar o `swag`, gere a documentação executando:
+
+```bash
+# Na raiz do projeto
+swag init
+```
+
+Isso criará a pasta `docs/` com os arquivos de documentação necessários.
+
+### Acessar a UI do Swagger
+
+1. Inicie a aplicação (se ainda não estiver rodando):
+   ```bash
+   docker-compose up --build
+   # ou
+   go run cmd/api/main.go
+   ```
+
+2. Abra seu navegador e acesse:
+   ```
+   http://localhost:8080/swagger/index.html
+   ```
+
+3. Você verá uma interface interativa onde pode:
+   - Ver todos os endpoints disponíveis
+   - Ver exemplos de requisições e respostas
+   - Testar os endpoints diretamente no navegador
+   - Ver os modelos de dados (User)
+
+### Atualizar a Documentação
+
+Sempre que modificar os endpoints ou adicionar novos, execute novamente:
+```bash
+swag init
+```
+
+E reinicie a aplicação para ver as mudanças.
+
 ## Endpoints
 
 - `GET  /healthz` - Verifica se a aplicação está respondendo

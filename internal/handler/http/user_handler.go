@@ -28,7 +28,7 @@ import (
 // - Não acessa banco de dados diretamente (isso é do repository)
 // - Não valida regras de negócio (ex: email válido - isso é do usecase)
 type UserHandler struct {
-	uc domain.UserUseCase  // Dependência: o usecase que contém a lógica de negócio
+	uc domain.UserUseCase // Dependência: o usecase que contém a lógica de negócio
 }
 
 // NewUserHandler cria um novo handler recebendo o usecase como dependência
@@ -51,12 +51,20 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 // ============================================
 // CREATE USER
 // ============================================
+// @Summary Create user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body domain.User true "User payload"
+// @Success 201 {object} domain.User
+// @Failure 400 {object} map[string]string
+// @Router /api/v1/users [post]
 // createUser trata requisições POST /api/v1/users
 //
 // SOBRE OS PARÂMETROS:
-// - w http.ResponseWriter: usado para escrever a resposta HTTP
-// - r *http.Request: contém informações da requisição (body, headers, etc.)
-//   O * significa que é um ponteiro - Go passa por referência para evitar cópia
+//   - w http.ResponseWriter: usado para escrever a resposta HTTP
+//   - r *http.Request: contém informações da requisição (body, headers, etc.)
+//     O * significa que é um ponteiro - Go passa por referência para evitar cópia
 func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	// Define uma struct anônima para receber os dados do JSON
 	// As tags json:"name" mapeiam os campos do JSON para os campos da struct
@@ -77,7 +85,7 @@ func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	// Se o JSON for inválido (ex: sintaxe errada, tipo errado), retorna erro
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid request body")
-		return  // Para a execução aqui - não continua
+		return // Para a execução aqui - não continua
 	}
 
 	// Chama o usecase para criar o usuário
@@ -104,6 +112,12 @@ func (h *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
+// @Summary List users
+// @Tags users
+// @Produce json
+// @Success 200 {array} domain.User
+// @Router /api/v1/users [get]
+
 // listUsers trata requisições GET /api/v1/users
 func (h *UserHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.uc.ListUsers()
@@ -115,7 +129,20 @@ func (h *UserHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, users)
 }
 
+// @Summary List users
+// @Tags users
+// @Produce json
+// @Success 200 {array} domain.User
+// @Router /api/v1/users [get]
+
 // getUser trata requisições GET /api/v1/users/{id}
+// @Summary Get user by ID
+// @Tags users
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} domain.User
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/users/{id} [get]
 func (h *UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
