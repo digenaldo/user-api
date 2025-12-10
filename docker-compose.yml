@@ -1,6 +1,5 @@
-version: '3.8'
-
 # Define os serviços (containers) que vamos rodar
+# Nota: o campo 'version' foi removido pois não é mais necessário no Docker Compose v2+
 services:
   # Serviço do MongoDB - nosso banco de dados
   mongo:

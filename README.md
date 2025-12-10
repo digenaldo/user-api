@@ -158,3 +158,93 @@ podman compose down -v
 - Entenda por que usamos ponteiros em Go
 - Observe como o context controla timeouts
 
+## Resolução de Problemas
+
+### Erro: "package user-api is not in GOROOT" (Windows)
+
+**Problema:** Ao tentar compilar ou executar, aparece erro dizendo que o package `user-api` não foi encontrado.
+
+**Causa:** No Windows, o Go precisa que você esteja dentro do diretório do módulo ou que o `go.mod` esteja configurado corretamente.
+
+**Solução:**
+1. Certifique-se de estar na raiz do projeto (onde está o arquivo `go.mod`)
+2. Execute `go mod tidy` para sincronizar as dependências
+3. Se ainda não funcionar, verifique se o nome do módulo no `go.mod` está correto:
+   ```bash
+   cat go.mod
+   ```
+   Deve mostrar `module user-api` na primeira linha
+4. Tente compilar novamente:
+   ```bash
+   go build ./cmd/api
+   ```
+
+### Erro: "docker-credential-desktop: executable file not found in PATH" (Windows)
+
+**Problema:** Ao executar `docker-compose up --build`, aparece o erro:
+```
+error getting credentials - err: exec: "docker-credential-desktop": executable file not found in %PATH%
+```
+
+**Causa:** O Docker Desktop não está configurado corretamente ou não está rodando.
+
+**Soluções:**
+
+**Opção 1: Iniciar o Docker Desktop**
+1. Abra o Docker Desktop no Windows
+2. Aguarde até que ele esteja totalmente iniciado (ícone na bandeja do sistema)
+3. Tente novamente o comando `docker-compose up --build`
+
+**Opção 2: Remover credenciais do Docker**
+Se o Docker Desktop estiver rodando e ainda assim der erro, tente remover a configuração de credenciais:
+
+1. Abra o arquivo `~/.docker/config.json` (ou `%USERPROFILE%\.docker\config.json` no Windows)
+2. Remova ou comente a linha que contém `"credsStore": "desktop"` ou `"credHelpers"`
+3. Salve o arquivo e tente novamente
+
+**Opção 3: Usar Docker sem credenciais**
+Configure o Docker para não usar credenciais:
+```bash
+# No PowerShell ou CMD
+docker config --help
+```
+
+### Aviso: "the attribute `version` is obsolete" no docker-compose.yml
+
+**Problema:** Ao executar `docker-compose up`, aparece um aviso:
+```
+the attribute `version` is obsolete, it will be ignored
+```
+
+**Causa:** A partir do Docker Compose v2, o campo `version` não é mais necessário.
+
+**Solução:** Remova a primeira linha `version: '3.8'` do arquivo `docker-compose.yml`. O arquivo funcionará normalmente sem ela.
+
+### Problemas comuns ao rodar localmente (sem Docker)
+
+Se você quiser rodar sem Docker, precisa ter o MongoDB instalado localmente:
+
+1. Instale o MongoDB no seu sistema
+2. Inicie o serviço do MongoDB
+3. Execute a aplicação:
+   ```bash
+   go run cmd/api/main.go
+   ```
+4. Ou defina as variáveis de ambiente:
+   ```bash
+   # Windows (PowerShell)
+   $env:MONGO_URI="mongodb://localhost:27017"
+   $env:PORT="8080"
+   go run cmd/api/main.go
+   
+   # Windows (CMD)
+   set MONGO_URI=mongodb://localhost:27017
+   set PORT=8080
+   go run cmd/api/main.go
+   
+   # Linux/Mac
+   export MONGO_URI="mongodb://localhost:27017"
+   export PORT="8080"
+   go run cmd/api/main.go
+   ```
+
