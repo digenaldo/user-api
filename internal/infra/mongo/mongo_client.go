@@ -10,6 +10,11 @@ import (
 )
 
 // NewClient creates a new MongoDB client
+//
+// Retorna um `*mongo.Client` (ponteiro): isso significa que a função
+// devolve o endereço de um objeto `mongo.Client` alocado. Trabalhar com
+// ponteiros evita cópias do objeto e permite compartilhar o mesmo cliente
+// entre diferentes partes da aplicação.
 func NewClient(uri string) *mongo.Client {
 	// Cria um contexto com timeout para as operações iniciais de conexão.
 	// Usamos um timeout para evitar que a inicialização trave indefinidamente

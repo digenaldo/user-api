@@ -45,6 +45,16 @@ func (uc *userUseCase) CreateUser(name, email string) (*domain.User, error) {
 
 	// Construímos a entidade de domínio. Note que aqui ainda não há ID,
 	// pois o repositório (MongoDB) deverá atribuí-lo ao persistir.
+	//
+	// Observação sobre `&` e `*`:
+	// - O operador `&` antes de `domain.User{...}` cria uma struct e
+	//   retorna seu endereço (um *domain.User). Ou seja `user` é um
+	//   ponteiro para a entidade.
+	// - Usamos ponteiro para que, ao passá-lo para o repositório
+	//   (`repo.Create(user)`), o repositório possa preencher/alterar
+	//   campos (por exemplo `ID`) diretamente na mesma instância —
+	//   evitando cópias desnecessárias e permitindo que o chamador
+	//   observe as modificações.
 	user := &domain.User{
 		Name:  name,
 		Email: email,

@@ -31,7 +31,15 @@ func main() {
 
 	// Create MongoDB client
 	// Cria o cliente MongoDB usando o helper em internal/infra/mongo.
-	// O helper encapsula opções do driver e retorna um *mongo.Client pronto.
+	// O helper encapsula opções do driver e retorna um `*mongo.Client` pronto.
+	//
+	// Explicando `*` no contexto de `*mongo.Client`:
+	// - Em Go, `*T` significa "ponteiro para T". Quando a função retorna
+	//   `*mongo.Client` ela está retornando o endereço de um valor do tipo
+	//   `mongo.Client` alocado (ou gerenciado) internamente.
+	// - Usamos ponteiros para evitar cópias da estrutura e para que chamadas
+	//   posteriores (`client.Database(...)`, `client.Disconnect(...)`) atuem
+	//   sobre o mesmo cliente compartilhado.
 	client := mongo.NewClient(mongoURI)
 	defer func() {
 		if err := client.Disconnect(nil); err != nil {

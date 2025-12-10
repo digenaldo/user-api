@@ -26,12 +26,26 @@ type UserMongoRepository struct {
 
 // NewUserMongoRepository creates a new MongoDB user repository
 func NewUserMongoRepository(db *mongo.Database) domain.UserRepository {
+	// Recebemos `db *mongo.Database` como ponteiro:
+	// - `*mongo.Database` é um tipo que representa o database no driver;
+	// - passar um ponteiro evita cópia de estruturas grandes e garante que
+	//   todas as operações no mesmo `db` afetem o mesmo estado/cliente.
+	//
+	// Retornamos `&UserMongoRepository{...}` (endereçando a struct):
+	// - o `&` cria e retorna um ponteiro para a struct `UserMongoRepository`.
+	// - assim o valor retornado implementa a interface `domain.UserRepository`
+	//   sem ser copiado em chamadas subsequentes.
 	return &UserMongoRepository{
 		collection: db.Collection("users"),
 	}
 }
 
 // Create inserts a new user document
+// Criamos métodos com receptor `r *UserMongoRepository` (ponteiro):
+//   - o receptor em forma de ponteiro permite que métodos modifiquem o
+//     estado interno da struct `UserMongoRepository` sem copiar a struct.
+//   - é uma prática comum em Go quando a struct contém campos mutáveis
+//     (ex: uma referência a uma coleção).
 func (r *UserMongoRepository) Create(user *domain.User) error {
 	// Cria um contexto com timeout para a operação de escrita.
 	// Contexts evitam que operações pendentes fiquem indefinidamente travadas.
@@ -39,6 +53,9 @@ func (r *UserMongoRepository) Create(user *domain.User) error {
 	defer cancel()
 
 	// Converte a entidade de domínio para o formato de documento usado no MongoDB.
+	// Note: `user` é um ponteiro (*domain.User). Isso permite que modificações
+	// feitas pelo repositório (ex: atribuir user.ID) reflitam no objeto
+	// passado pelo chamador.
 	doc := userDoc{
 		Name:  user.Name,
 		Email: user.Email,
@@ -51,7 +68,8 @@ func (r *UserMongoRepository) Create(user *domain.User) error {
 	}
 
 	// O driver retorna o _id gerado. Convertendo para ObjectID e depois para hex
-	// para armazenar no campo ID da entidade de domínio.
+	// para armazenar no campo ID da entidade de domínio. Como `user` é ponteiro,
+	// atribuí-lo aqui atualiza a instância visível ao chamador.
 	user.ID = result.InsertedID.(primitive.ObjectID).Hex()
 	return nil
 }
