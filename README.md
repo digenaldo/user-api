@@ -1,5 +1,5 @@
 
-# User API — Guia Didático (para alunos)
+User API — Guia Didático (para alunos)
 
 Este repositório contém uma API REST simples em Go para CRUD de usuários,
 com MongoDB como persistência. O objetivo deste README é explicar de forma
