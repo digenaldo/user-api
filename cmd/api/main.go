@@ -11,9 +11,6 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
-	httpSwagger "github.com/swaggo/http-swagger"
-
-	_ "user-api/cmd/api/docs" // Importa o pacote docs gerado pelo swag init
 
 	httphandler "user-api/internal/handler/http"
 	"user-api/internal/infra/mongo"
@@ -96,31 +93,16 @@ func main() {
 	// Chi é um router HTTP leve e rápido para Go
 	// Router mapeia URLs para funções (handlers)
 	r := chi.NewRouter()
-
+	
 	// Registra rota de healthcheck
 	httphandler.RegisterHealth(r)
-
+	
 	// Registra rotas de usuários (CRUD)
 	handler.RegisterRoutes(r)
-
-	// ============================================
-	// SWAGGER UI - DOCUMENTAÇÃO INTERATIVA
-	// ============================================
-	// Swagger UI fornece uma interface web para testar a API
+	
+	// Registra rotas do Swagger UI (documentação interativa)
 	// Acesse: http://localhost:8080/swagger/index.html
-	//
-	// COMO FUNCIONA:
-	// 1. O comando `swag init` gera o arquivo docs/swagger.json
-	// 2. httpSwagger serve a interface web usando esse arquivo
-	// 3. A UI permite testar todos os endpoints diretamente no navegador
-	//
-	// IMPORTANTE: Execute `swag init` antes de rodar a aplicação
-	// Isso gera a documentação a partir dos comentários no código
-	// O pacote docs (importado acima) fornece os arquivos do Swagger
-	// Quando o pacote docs está importado, http-swagger serve automaticamente
-	// em /swagger/doc.json
-	// Usamos WrapHandler que automaticamente detecta o pacote docs importado
-	r.Get("/swagger/*", httpSwagger.WrapHandler)
+	httphandler.RegisterSwagger(r)
 
 	// ============================================
 	// INICIALIZAÇÃO DO SERVIDOR

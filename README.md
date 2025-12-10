@@ -105,17 +105,23 @@ $env:Path += ";$(go env GOPATH)\bin"
 Após instalar o `swag`, gere a documentação executando:
 
 ```bash
-# IMPORTANTE: Execute dentro do diretório cmd/api (onde está o main.go)
-cd cmd/api
-swag init
+# Execute na raiz do projeto
+swag init -g cmd/api/main.go -o docs
 ```
 
-**Por que dentro de `cmd/api`?**
-- O `swag init` precisa estar no mesmo diretório onde está o `main.go` com as anotações Swagger
-- Ele procura pelo arquivo `main.go` no diretório atual
-- Os arquivos serão gerados em `cmd/api/docs/`
+**O que este comando faz:**
+- `-g cmd/api/main.go`: Especifica onde está o arquivo main.go com as anotações Swagger
+- `-o docs`: Define que os arquivos serão gerados na pasta `docs/` na raiz do projeto
+- Isso cria a pasta `docs/` na raiz com os arquivos necessários (docs.go, swagger.json, swagger.yaml)
 
-Isso criará a pasta `docs/` dentro de `cmd/api/` com os arquivos de documentação necessários.
+**Alternativa (se preferir executar de dentro de cmd/api):**
+```bash
+cd cmd/api
+swag init -o ../../docs
+cd ../..
+```
+
+Isso criará a pasta `docs/` na raiz do projeto com os arquivos de documentação necessários.
 
 ### Acessar a UI do Swagger
 
@@ -141,8 +147,8 @@ Isso criará a pasta `docs/` dentro de `cmd/api/` com os arquivos de documentaç
 
 Sempre que modificar os endpoints ou adicionar novos, execute novamente:
 ```bash
-cd cmd/api
-swag init
+# Na raiz do projeto
+swag init -g cmd/api/main.go -o docs
 ```
 
 E reinicie a aplicação para ver as mudanças.
