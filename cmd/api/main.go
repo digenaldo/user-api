@@ -13,6 +13,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
 
+	_ "user-api/cmd/api/docs" // Importa o pacote docs gerado pelo swag init
+
 	httphandler "user-api/internal/handler/http"
 	"user-api/internal/infra/mongo"
 	"user-api/internal/repository"
@@ -114,8 +116,9 @@ func main() {
 	//
 	// IMPORTANTE: Execute `swag init` antes de rodar a aplicação
 	// Isso gera a documentação a partir dos comentários no código
+	// O pacote docs (importado acima) fornece os arquivos do Swagger
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+port+"/swagger/swagger.json"),
+		httpSwagger.URL("http://localhost:"+port+"/swagger/doc.json"),
 	))
 
 	// ============================================
