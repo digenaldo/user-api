@@ -117,9 +117,10 @@ func main() {
 	// IMPORTANTE: Execute `swag init` antes de rodar a aplicação
 	// Isso gera a documentação a partir dos comentários no código
 	// O pacote docs (importado acima) fornece os arquivos do Swagger
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+port+"/swagger/doc.json"),
-	))
+	// Quando o pacote docs está importado, http-swagger serve automaticamente
+	// em /swagger/doc.json
+	// Usamos WrapHandler que automaticamente detecta o pacote docs importado
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// ============================================
 	// INICIALIZAÇÃO DO SERVIDOR
