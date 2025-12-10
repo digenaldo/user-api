@@ -33,7 +33,7 @@ func main() {
 	// CONEXÃO COM MONGODB
 	// ============================================
 	// NewClient retorna um ponteiro (*mongo.Client)
-	// 
+	//
 	// O QUE É UM PONTEIRO?
 	// - Um ponteiro é o endereço de memória onde um valor está armazenado
 	// - Em Go, *T significa "ponteiro para tipo T"
@@ -52,7 +52,7 @@ func main() {
 	//   var p *int = &x      // p é um ponteiro para x (armazena o endereço de x)
 	//   *p = 20              // modifica x através do ponteiro (x agora é 20)
 	client := mongo.NewClient(mongoURI)
-	
+
 	// defer garante que esta função seja executada quando main() terminar
 	// Mesmo se houver um panic ou return antecipado, o defer sempre executa
 	// Isso é essencial para limpar recursos (fechar conexões, arquivos, etc.)
@@ -88,8 +88,8 @@ func main() {
 	// Chi é um router HTTP leve e rápido para Go
 	// Router mapeia URLs para funções (handlers)
 	r := chi.NewRouter()
-	httphandler.RegisterHealth(r)  // Rota de healthcheck (/healthz)
-	handler.RegisterRoutes(r)      // Rotas de usuários (/api/v1/users/*)
+	httphandler.RegisterHealth(r) // Rota de healthcheck (/healthz)
+	handler.RegisterRoutes(r)     // Rotas de usuários (/api/v1/users/*)
 
 	// ============================================
 	// INICIALIZAÇÃO DO SERVIDOR

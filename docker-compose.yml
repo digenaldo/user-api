@@ -1,59 +1,198 @@
-# Define os serviços (containers) que vamos rodar
-# Nota: o campo 'version' foi removido pois não é mais necessário no Docker Compose v2+
+# ============================================
+# DOCKER COMPOSE - ORQUESTRAÇÃO DE CONTAINERS
+# ============================================
+# docker-compose.yml define múltiplos containers e como eles se relacionam
+# Facilita rodar aplicações com vários serviços (API + Banco de Dados)
+#
+# O QUE O DOCKER COMPOSE FAZ:
+# 1. Cria uma rede isolada para os containers
+# 2. Inicia os containers na ordem correta
+# 3. Configura variáveis de ambiente
+# 4. Monta volumes (persistência de dados)
+# 5. Expõe portas para o host
+#
+# VANTAGENS:
+# - Um comando (`docker compose up`) inicia tudo
+# - Containers se comunicam pelo nome (não precisa IP)
+# - Configuração versionada no código
+# - Fácil de compartilhar entre desenvolvedores
+#
+# NOTA: O campo 'version' foi removido - não é mais necessário no Docker Compose v2+
+
+# ============================================
+# SERVIÇOS (CONTAINERS)
+# ============================================
+# Define os containers que vamos rodar
+# Cada serviço é um container separado
 services:
-  # Serviço do MongoDB - nosso banco de dados
+  
+  # ============================================
+  # SERVIÇO: MONGODB
+  # ============================================
+  # Container do banco de dados MongoDB
   mongo:
     # Usa a imagem oficial do MongoDB versão 7.0
+    # Se a imagem não existir localmente, Docker baixa automaticamente
+    # Tag "7.0" garante versão específica (mais previsível)
     image: mongo:7.0
     
-    # Expõe a porta 27017 (porta padrão do MongoDB) para o host
-    # Formato: "host:container" - permite acessar de fora do container
+    # ============================================
+    # PORTAS
+    # ============================================
+    # Expõe portas do container para o host
+    # Formato: "PORTA_HOST:PORTA_CONTAINER"
+    #
+    # "27017:27017" significa:
+    # - Porta 27017 do host → porta 27017 do container
+    # - Permite acessar MongoDB de fora do container
+    # - Útil para conectar com ferramentas (MongoDB Compass, etc.)
+    #
+    # SEM EXPOR A PORTA:
+    # - Container ainda funciona normalmente
+    # - Outros containers na mesma rede podem acessar
+    # - Host (seu computador) NÃO consegue acessar
     ports:
       - "27017:27017"
     
-    # Variáveis de ambiente para configurar o MongoDB
-    # Essas variáveis são lidas na primeira inicialização
+    # ============================================
+    # VARIÁVEIS DE AMBIENTE
+    # ============================================
+    # Configura o MongoDB na primeira inicialização
+    # Essas variáveis são lidas APENAS na primeira vez que o volume é criado
+    #
+    # MONGO_INITDB_ROOT_USERNAME: cria usuário root
+    # MONGO_INITDB_ROOT_PASSWORD: define senha do root
+    #
+    # IMPORTANTE:
+    # - Se o volume já existir, essas variáveis são IGNORADAS
+    # - Para resetar, remova o volume: docker compose down -v
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
     
-    # Volume para persistir os dados do MongoDB
-    # Se o container for removido, os dados ficam salvos no volume
+    # ============================================
+    # VOLUMES (PERSISTÊNCIA)
+    # ============================================
+    # Volume armazena dados do MongoDB fora do container
+    #
+    # POR QUE USAR VOLUME?
+    # - Containers são efêmeros (podem ser removidos)
+    # - Sem volume, dados são perdidos quando container é removido
+    # - Com volume, dados persistem mesmo removendo o container
+    #
+    # mongo_data:/data/db significa:
+    # - mongo_data: nome do volume (definido na seção volumes abaixo)
+    # - /data/db: diretório dentro do container onde MongoDB armazena dados
+    #
+    # ONDE FICA O VOLUME?
+    # - Docker gerencia automaticamente
+    # - No Linux: /var/lib/docker/volumes/
+    # - No Mac/Windows: dentro da VM do Docker
     volumes:
       - mongo_data:/data/db
 
-  # Serviço da nossa API
+  # ============================================
+  # SERVIÇO: API
+  # ============================================
+  # Container da nossa aplicação Go
   api:
+    # ============================================
+    # BUILD (COMPILAÇÃO)
+    # ============================================
     # Constrói a imagem usando o Dockerfile na raiz do projeto
+    # "." significa diretório atual (onde está o docker-compose.yml)
+    #
+    # PROCESSO:
+    # 1. Docker lê o Dockerfile
+    # 2. Executa os comandos (compila a aplicação)
+    # 3. Cria a imagem
+    # 4. Usa a imagem para criar o container
     build: .
     
-    # Garante que o MongoDB inicie antes da API
-    # Importante: isso só garante a ordem, não espera o MongoDB estar pronto
-    # Por isso nossa aplicação tem lógica de reconexão
+    # ============================================
+    # DEPENDÊNCIAS
+    # ============================================
+    # Garante que o MongoDB inicie ANTES da API
+    #
+    # IMPORTANTE: depends_on só garante ORDEM, não ESPERA estar pronto!
+    # - MongoDB pode iniciar mas ainda não estar aceitando conexões
+    # - Por isso nossa aplicação tem lógica de reconexão
+    # - Em produção, use healthcheck ou wait-for-it
+    #
+    # FLUXO:
+    # 1. Docker inicia o container "mongo"
+    # 2. Docker inicia o container "api" (depois do mongo)
+    # 3. API tenta conectar ao MongoDB
+    # 4. Se MongoDB ainda não estiver pronto, API tenta reconectar
     depends_on:
       - mongo
     
-    # Variáveis de ambiente que a aplicação vai ler
+    # ============================================
+    # VARIÁVEIS DE AMBIENTE
+    # ============================================
+    # Variáveis que a aplicação Go vai ler (os.Getenv)
     environment:
-      # URI de conexão: mongodb://usuário:senha@host:porta/?authSource=admin
-      # O host é "mongo" porque é o nome do serviço no docker-compose
-      # Dentro da rede Docker, os serviços se comunicam pelo nome
+      # URI de conexão do MongoDB
+      # Formato: mongodb://usuário:senha@host:porta/?authSource=admin
+      #
+      # SOBRE O HOST "mongo":
+      # - "mongo" é o NOME do serviço definido acima
+      # - Docker Compose cria uma rede interna
+      # - Containers se comunicam pelo NOME, não por IP
+      # - DNS interno do Docker resolve "mongo" para o IP do container
+      #
+      # POR QUE NÃO "localhost"?
+      # - localhost dentro do container = o próprio container
+      # - "mongo" = outro container na mesma rede
+      # - É assim que containers se comunicam!
+      #
+      # authSource=admin: usa o database "admin" para autenticação
       MONGO_URI: mongodb://root:root@mongo:27017/?authSource=admin
+      
+      # Porta que a aplicação vai escutar
       PORT: 8080
     
+    # ============================================
+    # PORTAS
+    # ============================================
     # Expõe a porta 8080 da API para o host
+    # Permite acessar a API de fora do container
+    # Exemplo: http://localhost:8080/healthz
     ports:
       - "8080:8080"
 
-# Define volumes nomeados (persistência de dados)
+# ============================================
+# VOLUMES (DEFINIÇÃO)
+# ============================================
+# Define volumes nomeados que podem ser reutilizados
+# Volumes são gerenciados pelo Docker e persistem dados
 volumes:
   mongo_data:
     # Este volume armazena os dados do MongoDB
     # Permanece mesmo se removermos o container
+    #
+    # PARA REMOVER O VOLUME (APAGAR DADOS):
+    # docker compose down -v
+    #
+    # PARA VER VOLUMES:
+    # docker volume ls
+    #
+    # PARA INSPECIONAR:
+    # docker volume inspect user-api_mongo_data
 
-# Notas importantes:
-# - depends_on garante ordem de inicialização, mas não verifica se o serviço está pronto
-#   Por isso nossa aplicação tenta reconectar automaticamente se o banco ainda não estiver disponível
-# - Para usar com Podman: `podman compose up --build` (mesma sintaxe do Docker)
-# - As credenciais root/root são apenas para desenvolvimento - NUNCA use em produção
-# - Os serviços se comunicam pela rede interna do Docker usando os nomes (mongo, api)
+# ============================================
+# OBSERVAÇÕES IMPORTANTES
+# ============================================
+# - depends_on garante ordem, mas não verifica se serviço está pronto
+#   Por isso nossa aplicação tenta reconectar automaticamente
+#
+# - Para usar com Podman: `podman compose up --build` (mesma sintaxe)
+#
+# - Credenciais root/root são APENAS para desenvolvimento
+#   NUNCA use em produção! Use variáveis de ambiente ou secrets
+#
+# - Serviços se comunicam pela rede interna usando os NOMES (mongo, api)
+#   Não precisa saber IPs - Docker gerencia automaticamente
+#
+# - Rede interna é isolada - containers não são acessíveis de fora
+#   Apenas portas expostas (ports:) são acessíveis do host
