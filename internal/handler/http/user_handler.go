@@ -12,9 +12,9 @@ import (
 
 // UserHandler handles HTTP requests for users
 // Comentários gerais:
-// - Este handler expõe os endpoints REST para CRUD de usuários.
-// - Cada método traduz a requisição HTTP para chamadas aos usecases (lógica de negócio),
-//   trata erros e escreve respostas JSON com o status HTTP apropriado.
+//   - Este handler expõe os endpoints REST para CRUD de usuários.
+//   - Cada método traduz a requisição HTTP para chamadas aos usecases (lógica de negócio),
+//     trata erros e escreve respostas JSON com o status HTTP apropriado.
 type UserHandler struct {
 	uc domain.UserUseCase
 }
