@@ -14,4 +14,3 @@ func RegisterSwagger(r chi.Router) {
 	// quando ele está importado (linha acima)
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }
-

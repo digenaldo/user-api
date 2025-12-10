@@ -93,13 +93,13 @@ func main() {
 	// Chi é um router HTTP leve e rápido para Go
 	// Router mapeia URLs para funções (handlers)
 	r := chi.NewRouter()
-	
+
 	// Registra rota de healthcheck
 	httphandler.RegisterHealth(r)
-	
+
 	// Registra rotas de usuários (CRUD)
 	handler.RegisterRoutes(r)
-	
+
 	// Registra rotas do Swagger UI (documentação interativa)
 	// Acesse: http://localhost:8080/swagger/index.html
 	httphandler.RegisterSwagger(r)
