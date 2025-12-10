@@ -108,14 +108,14 @@ func main() {
 	// Acesse: http://localhost:8080/swagger/index.html
 	//
 	// COMO FUNCIONA:
-	// 1. O comando `swag init` gera os arquivos na pasta docs/
-	// 2. httpSwagger serve a interface web acessando /swagger/swagger.json
+	// 1. O comando `swag init` gera o arquivo docs/swagger.json
+	// 2. httpSwagger serve a interface web usando esse arquivo
 	// 3. A UI permite testar todos os endpoints diretamente no navegador
 	//
 	// IMPORTANTE: Execute `swag init` antes de rodar a aplicação
 	// Isso gera a documentação a partir dos comentários no código
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:"+port+"/swagger/doc.json"),
+		httpSwagger.URL("http://localhost:"+port+"/swagger/swagger.json"),
 	))
 
 	// ============================================
