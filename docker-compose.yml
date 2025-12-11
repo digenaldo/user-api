@@ -52,7 +52,9 @@ services:
     # - Outros containers na mesma rede podem acessar
     # - Host (seu computador) NÃO consegue acessar
     ports:
-      - "27017:27017"
+      # Mapeamento alterado para evitar conflito com outro Mongo local
+      # Host:Container -> 27018:27017 (acessa o MongoDB no host via localhost:27018)
+      - "27018:27017"
     
     # ============================================
     # VARIÁVEIS DE AMBIENTE
@@ -159,7 +161,9 @@ services:
     # Permite acessar a API de fora do container
     # Exemplo: http://localhost:8080/healthz
     ports:
-      - "8080:8080"
+      # Mapeamento alterado para evitar conflito com outros containers
+      # Host:Container -> 8082:8080 (acessa no host via http://localhost:8082)
+      - "8082:8080"
 
 # ============================================
 # VOLUMES (DEFINIÇÃO)

@@ -66,7 +66,7 @@ podman compose up --build
 
 **Verificar se está funcionando:**
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:8082/healthz
 ```
 
 ### Opção 2: Rodar Localmente (sem Docker)
@@ -100,10 +100,10 @@ curl http://localhost:8080/healthz
 
 **Verificar se está funcionando:**
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:8082/healthz
 ```
 
-A API estará disponível em `http://localhost:8080`
+A API estará disponível em `http://localhost:8082`
 
 ## Documentação Swagger (UI Interativa)
 
@@ -144,7 +144,7 @@ swag init -g cmd/api/main.go -o docs
 
 2. **Acesse no navegador:**
    ```
-   http://localhost:8080/swagger/index.html
+   http://localhost:8082/swagger/index.html
    ```
 
 3. **Na interface você pode:**
@@ -180,31 +180,31 @@ E reinicie a aplicação.
 
 **Criar usuário:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8082/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{"name":"João Silva","email":"joao@example.com"}'
 ```
 
 **Listar usuários:**
 ```bash
-curl http://localhost:8080/api/v1/users
+curl http://localhost:8082/api/v1/users
 ```
 
 **Buscar por ID:**
 ```bash
-curl http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011
+curl http://localhost:8082/api/v1/users/507f1f77bcf86cd799439011
 ```
 
 **Atualizar usuário:**
 ```bash
-curl -X PUT http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011 \
+curl -X PUT http://localhost:8082/api/v1/users/507f1f77bcf86cd799439011 \
   -H "Content-Type: application/json" \
   -d '{"name":"João Atualizado","email":"joao.novo@example.com"}'
 ```
 
 **Deletar usuário:**
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/users/507f1f77bcf86cd799439011
+curl -X DELETE http://localhost:8082/api/v1/users/507f1f77bcf86cd799439011
 ```
 
 ## Onde Começar a Entender o Código
