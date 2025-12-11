@@ -81,15 +81,16 @@ curl http://localhost:8082/healthz
    ```bash
    # Linux/Mac
    export MONGO_URI="mongodb://localhost:27017"
-   export PORT="8080"
+      # Porta padrão da aplicação (quando rodando localmente sem compose)
+      export PORT="8082"
    
    # Windows (PowerShell)
    $env:MONGO_URI="mongodb://localhost:27017"
-   $env:PORT="8080"
+      $env:PORT="8082"
    
    # Windows (CMD)
    set MONGO_URI=mongodb://localhost:27017
-   set PORT=8080
+      set PORT=8082
    ```
 
 3. **Execute a aplicação:**
@@ -220,7 +221,7 @@ curl -X DELETE http://localhost:8082/api/v1/users/507f1f77bcf86cd799439011
 ## Variáveis de Ambiente
 
 - `MONGO_URI` - URI do MongoDB (padrão: `mongodb://localhost:27017`)
-- `PORT` - Porta do servidor (padrão: `8080`)
+- `PORT` - Porta do servidor (padrão: `8082`)
 
 No `docker-compose.yml` essas variáveis já estão configuradas.
 
@@ -236,8 +237,9 @@ podman compose down -v
 
 - **Database:** `userdb`
 - **Collection:** `users`
-- **Porta:** `27017`
-- **Credenciais (docker-compose):** `root` / `root`
+ - **Porta (no container):** `27017`
+ - **Porta (no host via docker-compose):** `27018` (mapeamento `27018:27017`)
+ - **Credenciais (docker-compose):** `root` / `root`
 
 ## Dicas para Estudar
 
@@ -322,17 +324,17 @@ Se você quiser rodar sem Docker, precisa ter o MongoDB instalado localmente:
    ```bash
    # Windows (PowerShell)
    $env:MONGO_URI="mongodb://localhost:27017"
-   $env:PORT="8080"
-   go run cmd/api/main.go
+      $env:PORT="8082"
+      go run cmd/api/main.go
    
    # Windows (CMD)
    set MONGO_URI=mongodb://localhost:27017
-   set PORT=8080
-   go run cmd/api/main.go
+      set PORT=8082
+      go run cmd/api/main.go
    
    # Linux/Mac
    export MONGO_URI="mongodb://localhost:27017"
-   export PORT="8080"
-   go run cmd/api/main.go
+      export PORT="8082"
+      go run cmd/api/main.go
    ```
 
