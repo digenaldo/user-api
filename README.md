@@ -1,5 +1,7 @@
 # User API — Guia Didático
 
+[![Programa.ai Golang Course](https://img.shields.io/badge/Programa.ai-Golang-blue?logo=go)](https://programaai.dev/cursos/9)
+
 > Este projeto foi desenvolvido como parte do curso de Go oferecido em Programa.ai:
 > https://programaai.dev/cursos/9
 >
