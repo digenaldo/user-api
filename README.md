@@ -7,7 +7,7 @@
 API REST em Go para CRUD de usuários usando MongoDB. Este projeto segue Clean Architecture para manter o código organizado e testável.
 
 >
-> Curso ministrado por: Digenaldo
+> Curso ministrado por: Digenaldo Neto
 ## Arquitetura
 
 O projeto está dividido em camadas bem definidas:
