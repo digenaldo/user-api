@@ -2,10 +2,7 @@
 
 [![Programa.ai Golang Course](https://img.shields.io/badge/Programa.ai-Golang-blue?logo=go)](https://programaai.dev/cursos/9)
 
-> Este projeto foi desenvolvido como parte do curso de Go oferecido em Programa.ai:
-> https://programaai.dev/cursos/9
->
-> Curso: "Golang" — Programa.ai
+> Este projeto foi desenvolvido como parte do curso de Go oferecido em Programa.ai
 
 API REST em Go para CRUD de usuários usando MongoDB. Este projeto segue Clean Architecture para manter o código organizado e testável.
 
